@@ -1,9 +1,8 @@
 name: Flutter CI/CD Release
 run-name: Flutter Release
 on: 
-  # Run on the 1st and 15th of every month
-  schedule: '0 12 1,15 * *'
   push:
+  schedule: '0 12 1,15 * *' # Run on the 1st and 15th of every month
 
 jobs:
   release:
