@@ -29,8 +29,8 @@ jobs:
         with:
           channel: stable
 
-      - run: echo ${{ secrets.KEYSTORE }} | base64 -d > $GITHUB_WORKSPACE/app.jks
-      - run: echo ${{ secrets.KEY_PROPERTIES }} | android/key.properties
+      - run: echo ${{ secrets.KEYSTORE }} | base64 -d > android/app.jks
+      - run: echo ${{ secrets.KEY_PROPERTIES }} > android/key.properties
 
       - run: flutter build appbundle
       - run: flutter build apk
