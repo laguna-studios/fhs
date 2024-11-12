@@ -21,7 +21,7 @@ jobs:
           MINOR=$(echo $V | cut -c2)
           PATCH=$(echo $V | cut -c3)
           BUILD=$(expr 1 + $(echo $VERSION | cut -d+ -f2))
-          sed -i '' s/"^version:.*"/"version: $MAJOR.$MINOR.$PATCH+$BUILD"/g pubspec.yaml
+          sed -i s/"^version:.*"/"version: $MAJOR.$MINOR.$PATCH+$BUILD"/g pubspec.yaml
       
       - name: Commit new version number
         uses: EndBug/add-and-commit@v9.1.1
