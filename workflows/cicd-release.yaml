@@ -1,0 +1,43 @@
+name: Flutter CI/CD Release
+run-name: Flutter Release
+on: 
+  # Run on the 1st and 15th of every month
+  schedule: '0 12 1,15 * *'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Increase version and build number
+        run: 
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      
+      - name: Deserialize Secrets
+      - run: | 
+          echo ${{ secrets.KEYSTORE }} | base64 -d > app.jks
+          echo ${{ secrets.KEY_PROPERTIES }} > android/key.properties
+
+      - name: Build Bundle and APK
+      - run: | 
+          flutter build appbundle
+          flutter build apk
+
+      - name: Release To Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+          packageName: $PACKAGE_NAME
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: production
+      
+      - name: Delete Secrets
+        run: |
+          rm $GITHUB_WORKSPACE/app.jks
+          rm android/key.properties
