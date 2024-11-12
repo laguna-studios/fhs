@@ -32,12 +32,12 @@ jobs:
           channel: stable
       
       - name: Deserialize Secrets
-      - run: | 
+        run: | 
           echo ${{ secrets.KEYSTORE }} | base64 -d > app.jks
           echo ${{ secrets.KEY_PROPERTIES }} > android/key.properties
 
       - name: Build Bundle and APK
-      - run: | 
+        run: | 
           flutter build appbundle
           flutter build apk
 
