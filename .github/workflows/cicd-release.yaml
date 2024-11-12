@@ -24,7 +24,7 @@ jobs:
           sed -i s/"^version:.*"/"version: $MAJOR.$MINOR.$PATCH+$BUILD"/g pubspec.yaml
       
       - name: Commit new version number
-        uses: EndBug/add-and-commit@v9.1.1
+        uses: EndBug/add-and-commit@v9.1.4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
