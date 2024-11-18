@@ -19,4 +19,5 @@ runs:
 
     - name: Print Content
       run: ls -la
+      shell: bash
 
