@@ -3,21 +3,71 @@ description: 'Checkout Repository, Version Bump, Test & Analyze, Build Flutter A
 inputs:
   keystore_base64:
     description: 'Base64 encoded keystore to sign the app'
-    required: false
+    required: true
   key_properties_file:
     description: 'File with key properties. See https://docs.flutter.dev/deployment/android#reference-the-keystore-from-the-app'
-    required: false
-  service_account_base64:
-    description: 'Base64 encoded key for GCP service account'
-    required: false
+    required: true
+  service_account:
+    description: 'Account key for GCP service account'
+    required: true
+  package_name:
+    description: 'Package name'
+    required: true
 
 runs:
   using: "composite"
   steps:
     - name: Clone repository
-      uses: actions/checkout@v4
+        uses: actions/checkout@v4
+    
+    # - name: Flutter Test & Analyze
+    #   shell: bash
+    #   run: |
+    #     flutter test
+    #     flutter analyze
 
-    - name: Print Content
-      run: ls -la
+    - name: Increase version and build number
       shell: bash
+      run: |
+        VERSION=$(grep -E "^version: " pubspec.yaml | cut -d" " -f2)
+        V=$(expr 1 + $(echo $VERSION | cut -d+ -f1 | cut -d. -f1,2,3 | sed s/"\."//g))
+        MAJOR=$(echo $V | cut -c1)
+        MINOR=$(echo $V | cut -c2)
+        PATCH=$(echo $V | cut -c3)
+        BUILD=$(expr 1 + $(echo $VERSION | cut -d+ -f2))
+        sed -i s/"^version:.*"/"version: $MAJOR.$MINOR.$PATCH+$BUILD"/g pubspec.yaml
+    
+    - name: Commit new version number
+      uses: EndBug/add-and-commit@v9.1.4
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+    
+    - name: Deserialize Secrets and replace storeFile entry
+      shell: bash
+      run: | 
+        echo ${{ inputs.keystore_base64 }} | base64 -d > android/app/app.jks
+        echo ${{ inputs.key_properties_file }} | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
+
+    - name: Build Bundle and APK
+      shell: bash
+      run: | 
+        flutter build appbundle
+        flutter build apk
+
+    - name: Release To Play Store
+      uses: r0adkll/upload-google-play@v1
+      with:
+        serviceAccountJsonPlainText: ${{ inputs.service_account }}
+        packageName:  ${{ inputs.package_name }}
+        releaseFiles: build/app/outputs/bundle/release/app-release.aab
+        track: production
+    
+    - name: Delete Secrets
+      shell: bash
+      run: |
+        rm android/app/app.jks
+        rm android/key.properties
 
