@@ -26,7 +26,18 @@ runs:
     #     flutter test
     #     flutter analyze
 
-    - name: Increase version and build number
+    - name: Increase build number
+      shell: bash
+      run: |
+        VERSION=$(grep -E "^version: " pubspec.yaml | cut -d" " -f2)
+        V=$(echo $VERSION | cut -d+ -f1)
+        BUILD=$(expr 1 + $(echo $VERSION | cut -d+ -f2))
+        sed -i s/"^version:.*"/"version: $V+$BUILD"/g pubspec.yaml
+    
+    - name: Commit new build number
+      uses: EndBug/add-and-commit@v9.1.4
+
+    - name: Increase version number
       shell: bash
       run: |
         VERSION=$(grep -E "^version: " pubspec.yaml | cut -d" " -f2)
@@ -34,22 +45,24 @@ runs:
         MAJOR=$(echo $V | cut -c1)
         MINOR=$(echo $V | cut -c2)
         PATCH=$(echo $V | cut -c3)
-        BUILD=$(expr 1 + $(echo $VERSION | cut -d+ -f2))
+        BUILD=$(echo $VERSION | cut -d+ -f2)
         sed -i s/"^version:.*"/"version: $MAJOR.$MINOR.$PATCH+$BUILD"/g pubspec.yaml
     
-    - name: Commit new version number
-      uses: EndBug/add-and-commit@v9.1.4
-
     - name: Set up Flutter
       uses: subosito/flutter-action@v2
       with:
         channel: stable
     
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+
     - name: Deserialize Secrets and replace storeFile entry
       shell: bash
       run: | 
         echo ${{ inputs.keystore_base64 }} | base64 -d > android/app/app.jks
-        echo ${{ inputs.key_properties_file }} | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
+        echo "${{ inputs.key_properties_file }}" | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
         ls android/app
         ls android/
         wc -l android/key.properties
@@ -67,6 +80,9 @@ runs:
         packageName:  ${{ inputs.package_name }}
         releaseFiles: build/app/outputs/bundle/release/app-release.aab
         track: production
+          
+    - name: Commit new version number
+      uses: EndBug/add-and-commit@v9.1.4
     
     - name: Delete Secrets
       shell: bash
