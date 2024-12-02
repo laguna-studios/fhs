@@ -12,7 +12,7 @@ inputs:
     required: true
   package_name:
     description: 'Package name'
-    required: true
+    required: false
 
 runs:
   using: "composite"
@@ -20,11 +20,11 @@ runs:
     - name: Clone repository
       uses: actions/checkout@v4
     
-    # - name: Flutter Test & Analyze
-    #   shell: bash
-    #   run: |
-    #     flutter test
-    #     flutter analyze
+    - name: Flutter Test & Analyze
+      shell: bash
+      run: |
+        flutter test
+        flutter analyze
 
     - name: Increase build number
       shell: bash
@@ -63,9 +63,6 @@ runs:
       run: | 
         echo ${{ inputs.keystore_base64 }} | base64 -d > android/app/app.jks
         echo "${{ inputs.key_properties_file }}" | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
-        ls android/app
-        ls android/
-        wc -l android/key.properties
 
     - name: Build Bundle and APK
       shell: bash
@@ -73,11 +70,19 @@ runs:
         flutter build appbundle
         flutter build apk
 
+    - name: Prepare Package Name
+      shell: bash
+      run: |
+        PACKAGE_NAME=${{ inputs.package_name }}
+        if [ -z $PACKAGE_NAME ]; then
+        echo "PACKAGE_NAME=$PACKAGE_NAME" >> "$GITHUB_ENV"
+        fi
+
     - name: Release To Play Store
       uses: r0adkll/upload-google-play@v1
       with:
         serviceAccountJsonPlainText: ${{ inputs.service_account }}
-        packageName:  ${{ inputs.package_name }}
+        packageName:  ${{ PACKAGE_NAME}}
         releaseFiles: build/app/outputs/bundle/release/app-release.aab
         track: production
           
