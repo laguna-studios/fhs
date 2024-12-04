@@ -20,6 +20,16 @@ runs:
     - name: Clone repository
       uses: actions/checkout@v4
     
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+    
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Flutter Test & Analyze
       shell: bash
       run: |
@@ -48,16 +58,6 @@ runs:
         BUILD=$(echo $VERSION | cut -d+ -f2)
         sed -i s/"^version:.*"/"version: $MAJOR.$MINOR.$PATCH+$BUILD"/g pubspec.yaml
     
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        channel: stable
-    
-    - uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
-
     - name: Deserialize Secrets and replace storeFile entry
       shell: bash
       run: | 
