@@ -75,14 +75,15 @@ runs:
       run: |
         PACKAGE_NAME=${{ inputs.package_name }}
         if [ -z $PACKAGE_NAME ]; then
-        echo "PACKAGE_NAME=$PACKAGE_NAME" >> "$GITHUB_ENV"
+          PACKAGE_NAME=$(grep applicationId android/app/build.gradle | tr "'" '"' | cut -d'"' -f2)
         fi
+        echo "PACKAGE_NAME=$PACKAGE_NAME" >> "$GITHUB_ENV"
 
     - name: Release To Play Store
       uses: r0adkll/upload-google-play@v1
       with:
         serviceAccountJsonPlainText: ${{ inputs.service_account }}
-        packageName:  ${{ PACKAGE_NAME}}
+        packageName:  ${{ env.PACKAGE_NAME }}
         releaseFiles: build/app/outputs/bundle/release/app-release.aab
         track: production
           
