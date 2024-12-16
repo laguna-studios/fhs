@@ -63,6 +63,7 @@ runs:
       run: | 
         echo ${{ inputs.keystore_base64 }} | base64 -d > android/app/app.jks
         echo "${{ inputs.key_properties_file }}" | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
+        wc -l android/key.properties
 
     - name: Build Bundle and APK
       shell: bash
