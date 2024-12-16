@@ -63,7 +63,6 @@ runs:
       run: | 
         echo ${{ inputs.keystore_base64 }} | base64 -d > android/app/app.jks
         echo "${{ inputs.key_properties_file }}" | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
-        wc -l android/key.properties
 
     - name: Build Bundle and APK
       shell: bash
@@ -81,7 +80,7 @@ runs:
         echo "PACKAGE_NAME=$PACKAGE_NAME" >> "$GITHUB_ENV"
 
     - name: Release To Play Store
-      uses: r0adkll/upload-google-play@v1
+      uses: r0adkll/upload-google-play@v1.1.3
       with:
         serviceAccountJsonPlainText: ${{ inputs.service_account }}
         packageName:  ${{ env.PACKAGE_NAME }}
