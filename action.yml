@@ -27,8 +27,8 @@ runs:
     
     - uses: actions/setup-java@v4
       with:
-        distribution: 'temurin'
-        java-version: '17'
+        distribution: 'zulu'
+        java-version: '21'
 
     - name: Flutter Test & Analyze
       shell: bash
