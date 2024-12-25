@@ -3,16 +3,28 @@ description: 'Checkout Repository, Version Bump, Test & Analyze, Build Flutter A
 inputs:
   keystore_base64:
     description: 'Base64 encoded keystore to sign the app'
-    required: true
-  key_properties_file:
+    required: false
+  key_properties:
     description: 'File with key properties. See https://docs.flutter.dev/deployment/android#reference-the-keystore-from-the-app'
-    required: true
+    required: false
   service_account:
     description: 'Account key for GCP service account'
-    required: true
+    required: false
   package_name:
     description: 'Package name'
     required: false
+  create_release:
+    descritpion: 'Add apk and aab as release to repository'
+    required: false
+    default: false
+  qa:
+    descritpion: 'Run flutter analyze and test'
+    required: false
+    default: true
+  publish:
+    description: 'Publish to stores'
+    required: false
+    default: true
 
 runs:
   using: "composite"
@@ -32,6 +44,7 @@ runs:
 
     - name: Flutter Test & Analyze
       shell: bash
+      if: ${{ inputs.qa }}
       run: |
         flutter test
         flutter analyze
@@ -57,12 +70,13 @@ runs:
         PATCH=$(echo $V | cut -c3)
         BUILD=$(echo $VERSION | cut -d+ -f2)
         sed -i s/"^version:.*"/"version: $MAJOR.$MINOR.$PATCH+$BUILD"/g pubspec.yaml
+        echo "APP_VERSION=$MAJOR.$MINOR.$PATCH+$BUILD" >> "$GITHUB_ENV"
     
     - name: Deserialize Secrets and replace storeFile entry
       shell: bash
       run: | 
         echo ${{ inputs.keystore_base64 }} | base64 -d > android/app/app.jks
-        echo "${{ inputs.key_properties_file }}" | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
+        echo "${{ inputs.key_properties }}" | sed s/"storeFile=.*"/storeFile=app.jks/ > android/key.properties
 
     - name: Build Bundle and APK
       shell: bash
@@ -70,8 +84,18 @@ runs:
         flutter build appbundle
         flutter build apk
 
+    - name: Create Release
+      if: ${{ inputs.create_release }}
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.APP_VERSION }}
+        release_name: Release ${{ env.APP_VERSION }} 
+
     - name: Prepare Package Name
       shell: bash
+      if: ${{ inputs.publish }}
       run: |
         PACKAGE_NAME=${{ inputs.package_name }}
         if [ -z $PACKAGE_NAME ]; then
@@ -81,6 +105,7 @@ runs:
 
     - name: Release To Play Store
       uses: r0adkll/upload-google-play@v1.1.3
+      if: ${{ inputs.publish }}
       with:
         serviceAccountJsonPlainText: ${{ inputs.service_account }}
         packageName:  ${{ env.PACKAGE_NAME }}
@@ -88,6 +113,7 @@ runs:
         track: production
           
     - name: Commit new version number
+      if: ${{ inputs.publish }}
       uses: EndBug/add-and-commit@v9.1.4
     
     - name: Delete Secrets
