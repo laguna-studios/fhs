@@ -88,6 +88,7 @@ runs:
       if: ${{ inputs.create_release }}
       uses: ncipollo/release-action@v1
       with:
+        tag: ${{ env.APP_VERSION }}
         artifacts: "build/app/outputs/bundle/release/app-release.aab,build/app/outputs/flutter-apk/app-release.apk"
 
     - name: Prepare Package Name
