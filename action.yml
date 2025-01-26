@@ -25,6 +25,9 @@ inputs:
     description: 'Publish to stores'
     required: false
     default: true
+  flutter_version:
+    description: 'Flutter Version'
+    required: false
 
 runs:
   using: "composite"
@@ -36,6 +39,7 @@ runs:
       uses: subosito/flutter-action@v2
       with:
         channel: stable
+        flutter-version: ${{ inputs.flutter_version }}
     
     - uses: actions/setup-java@v4
       with:
